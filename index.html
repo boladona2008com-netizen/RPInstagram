@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+<meta charset="UTF-8">
+<title>RP Instagram</title>
+
+<!-- Firebase -->
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-storage-compat.js"></script>
+
+<style>
+body { font-family: Arial; background:#0d1117; color:#c9d1d9; margin:0; padding:0;}
+header { background:#161b22; padding:15px; font-size:22px; font-weight:bold; text-align:center;}
+.container { padding:20px; max-width:600px; margin:auto;}
+input, button, textarea { padding:10px; margin:5px 0; width:100%; border-radius:5px; border:none;}
+button { background:#238636; color:white; cursor:pointer;}
+button:hover { background:#2ea043;}
+.post { border:1px solid #30363d; padding:10px; margin-top:10px; border-radius:5px;}
+img { max-width:100%; border-radius:5px;}
+.hidden { display:none;}
+.like-btn, .comment-btn { margin-top:5px; cursor:pointer; color:#58a6ff; background:none; border:none; font-size:14px; }
+.comments { margin-left:10px; margin-top:5px; font-size:14px; }
+</style>
+</head>
+<body>
+
+<header>📸 RP Instagram</header>
+
+<div class="container">
+
+<!-- LOGIN -->
+<div id="login">
+  <h2>Login / Registrar</h2>
+  <input id="email" type="email" placeholder="Email">
+  <input id="senha" type="password" placeholder="Senha">
+  <button onclick="login()">Entrar / Registrar</button>
+</div>
+
+<!-- APP -->
+<div id="app" class="hidden">
+  <button onclick="logout()">Sair</button>
+  
+  <h3>Perfil</h3>
+  <input id="displayName" placeholder="Seu nome">
+  <input type="file" id="profilePhoto">
+  <button onclick="atualizarPerfil()">Atualizar Perfil</button>
+  
+  <h3>Nova Postagem</h3>
+  <textarea id="caption" placeholder="Escreva algo..."></textarea>
+  <input type="file" id="imageFile">
+  <button onclick="criarPost()">Postar</button>
+  
+  <h3>Feed</h3>
+  <div id="feed"></div>
+</div>
+
+</div>
+
+<script>
+// 🔑 CONFIG FIREBASE REAL
+const firebaseConfig = {
+  apiKey: "AIzaSyDtjf7IaX2Plj_rx0z2wb_ZAXjlWLbv7u8",
+  authDomain: "rpinstagram-ef67e.firebaseapp.com",
+  projectId: "rpinstagram-ef67e",
+  storageBucket: "rpinstagram-ef67e.firebasestorage.app",
+  messagingSenderId: "97404032370",
+  appId: "1:97404032370:web:38626b837cfdbad86179eb"
+};
+
+// Inicializa Firebase
+firebase.initializeApp(firebaseConfig);
+const auth = firebase.auth();
+const db = firebase.firestore();
+const storage = firebase.storage();
+
+// 🔐 LOGIN / REGISTRO
+function login() {
+  const e = email.value;
+  const s = senha.value;
+
+  auth.signInWithEmailAndPassword(e, s)
+    .catch(() => auth.createUserWithEmailAndPassword(e, s));
+}
+
+// 🚪 LOGOUT
+function logout() { auth.signOut(); }
+
+// 👤 ESTADO DO LOGIN
+auth.onAuthStateChanged(user => {
+  if (user) {
+    login.style.display = "none";
+    app.classList.remove("hidden");
+    carregarFeed();
+    carregarPerfil();
+  } else {
+    login.style.display = "block";
+    app.classList.add("hidden");
+  }
+});
+
+// 🖊 Atualizar perfil
+async function atualizarPerfil() {
+  const user = auth.currentUser;
+  if (!user) return;
+
+  let photoURL = user.photoURL;
+  const file = profilePhoto.files[0];
+  if (file) {
+    const storageRef = storage.ref().child(`profiles/${user.uid}`);
+    await storageRef.put(file);
+    photoURL = await storageRef.getDownloadURL();
+  }
+
+  await user.updateProfile({
+    displayName: displayName.value || user.displayName,
+    photoURL
+  });
+
+  alert("Perfil atualizado!");
+}
+
+// 📸 CRIAR POST
+async function criarPost() {
+  const user = auth.currentUser;
+  const captionText = caption.value;
+  const file = imageFile.files[0];
+  if (!user || !file) return alert("Escolha uma imagem e escreva algo!");
+
+  const storageRef = storage.ref().child(`posts/${Date.now()}_${file.name}`);
+  await storageRef.put(file);
+  const url = await storageRef.getDownloadURL();
+
+  db.collection("posts").add({
+    ownerId: user.uid,
+    caption: captionText,
+    imageURL: url,
+    likes: 0,
+    comments: [],
+    createdAt: new Date()
+  });
+
+  caption.value = "";
+  imageFile.value = "";
+}
+
+// 📂 CARREGAR FEED
+function carregarFeed() {
+  db.collection("posts")
+    .orderBy("createdAt", "desc")
+    .onSnapshot(snapshot => {
+      feed.innerHTML = "";
+      snapshot.forEach(doc => {
+        const data = doc.data();
+        const postDiv = document.createElement("div");
+        postDiv.className = "post";
+        postDiv.innerHTML = `
+          <strong>${data.ownerId}</strong>
+          <img src="${data.imageURL}">
+          <p>${data.caption}</p>
+          <button class="like-btn" onclick="curtir('${doc.id}')">❤️ ${data.likes}</button>
+          <div class="comments" id="comments-${doc.id}">
+            ${data.comments.map(c => `<p>${c}</p>`).join('')}
+          </div>
+          <input type="text" id="comment-input-${doc.id}" placeholder="Comentar...">
+          <button class="comment-btn" onclick="comentar('${doc.id}')">Comentar</button>
+        `;
+        feed.appendChild(postDiv);
+      });
+    });
+}
+
+// ❤️ Curtir post
+function curtir(postId) {
+  const postRef = db.collection("posts").doc(postId);
+  postRef.update({
+    likes: firebase.firestore.FieldValue.increment(1)
+  });
+}
+
+// 💬 Comentar post
+function comentar(postId) {
+  const input = document.getElementById(`comment-input-${postId}`);
+  const commentText = input.value;
+  if (!commentText) return;
+  db.collection("posts").doc(postId).update({
+    comments: firebase.firestore.FieldValue.arrayUnion(commentText)
+  });
+  input.value = "";
+}
+
+// ⚙ Carregar perfil do usuário
+function carregarPerfil() {
+  const user = auth.currentUser;
+  if (!user) return;
+  displayName.value = user.displayName || "";
+}
+</script>
+
+</body>
+</html>
