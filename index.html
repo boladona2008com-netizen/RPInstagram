@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+l<!DOCTYPE html>
 <html lang="pt-br">
 <head>
 <meta charset="UTF-8">
@@ -11,17 +11,96 @@
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-storage-compat.js"></script>
 
 <style>
-body { font-family: Arial; background:#0d1117; color:#c9d1d9; margin:0; padding:0;}
-header { background:#161b22; padding:15px; font-size:22px; font-weight:bold; text-align:center;}
-.container { padding:20px; max-width:600px; margin:auto;}
-input, button, textarea { padding:10px; margin:5px 0; width:100%; border-radius:5px; border:none;}
-button { background:#238636; color:white; cursor:pointer;}
-button:hover { background:#2ea043;}
-.post { border:1px solid #30363d; padding:10px; margin-top:10px; border-radius:5px;}
-img { max-width:100%; border-radius:5px;}
-.hidden { display:none;}
-.like-btn, .comment-btn { margin-top:5px; cursor:pointer; color:#58a6ff; background:none; border:none; font-size:14px; }
-.comments { margin-left:10px; margin-top:5px; font-size:14px; }
+/* ======== Geral ======== */
+body {
+  font-family: 'Arial', sans-serif;
+  background: linear-gradient(135deg, #4b6cb7, #182848);
+  color: #fff;
+  margin: 0;
+  padding: 0;
+}
+
+header {
+  background: rgba(0,0,0,0.6);
+  padding: 20px;
+  font-size: 28px;
+  font-weight: bold;
+  text-align: center;
+  letter-spacing: 2px;
+  box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+}
+
+/* ======== Container ======== */
+.container {
+  max-width: 400px;
+  margin: 60px auto 40px auto;
+  background: rgba(0,0,0,0.5);
+  padding: 30px;
+  border-radius: 15px;
+  box-shadow: 0 8px 20px rgba(0,0,0,0.5);
+}
+
+/* ======== Inputs ======== */
+input, textarea {
+  padding: 12px;
+  margin: 10px 0;
+  width: 100%;
+  border-radius: 8px;
+  border: none;
+  outline: none;
+  font-size: 16px;
+}
+
+input:focus, textarea:focus {
+  box-shadow: 0 0 8px #4b6cb7;
+}
+
+/* ======== Buttons ======== */
+button {
+  background: linear-gradient(90deg, #4b6cb7, #182848);
+  color: white;
+  font-size: 16px;
+  font-weight: bold;
+  border: none;
+  padding: 12px;
+  width: 100%;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: 0.3s;
+}
+
+button:hover {
+  background: linear-gradient(90deg, #182848, #4b6cb7);
+  transform: translateY(-2px);
+}
+
+/* ======== APP Sections ======== */
+.hidden { display: none; }
+.post {
+  border: 1px solid rgba(255,255,255,0.2);
+  padding: 12px;
+  margin-top: 15px;
+  border-radius: 10px;
+  background: rgba(0,0,0,0.3);
+}
+img { max-width: 100%; border-radius: 8px; margin-top: 10px; }
+.like-btn, .comment-btn {
+  margin-top: 5px;
+  cursor: pointer;
+  color: #ff6b81;
+  background: none;
+  border: none;
+  font-size: 14px;
+}
+.comments { margin-left: 10px; margin-top: 5px; font-size: 14px; color: #ddd; }
+
+/* ======== Login ======== */
+#login h2 {
+  text-align: center;
+  margin-bottom: 20px;
+  font-size: 24px;
+  color: #ffb347;
+}
 </style>
 </head>
 <body>
@@ -59,7 +138,7 @@ img { max-width:100%; border-radius:5px;}
 </div>
 
 <script>
-// 🔑 CONFIG FIREBASE REAL
+// 🔑 CONFIG FIREBASE
 const firebaseConfig = {
   apiKey: "AIzaSyDtjf7IaX2Plj_rx0z2wb_ZAXjlWLbv7u8",
   authDomain: "rpinstagram-ef67e.firebaseapp.com",
